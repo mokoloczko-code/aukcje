@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head><body>
+<title>Okazje z upadłości</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: katalog licytacyjny — pasek podsumowania, filtry, siatka kart „pozycji”, potem rejestr firm w upadłości */
+:root{
+  --bg:#eef0ee; --surface:#ffffff; --sunk:#e4e7e4; --fg:#16191c; --muted:#5b6268; --line:#d3d8d4;
+  --accent:#e3a400; --accent-ink:#1a1400; --accent-soft:#fff3cc;
+  --ok:#1f7a4d; --ok-soft:#dcf1e5; --warn:#b05a00; --warn-soft:#ffe8cf; --bad:#b3261e; --bad-soft:#fbe0de;
+  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111315; --surface:#1a1d20; --sunk:#22262a; --fg:#e9ecea; --muted:#9aa2a8; --line:#2e3338;
+  --accent:#f2b705; --accent-ink:#1a1400; --accent-soft:#3a2f08;
+  --ok:#5fcf94; --ok-soft:#173326; --warn:#ffb15c; --warn-soft:#3a2810; --bad:#ff8a80; --bad-soft:#3d1a18; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111315; --surface:#1a1d20; --sunk:#22262a; --fg:#e9ecea; --muted:#9aa2a8; --line:#2e3338;
+  --accent:#f2b705; --accent-ink:#1a1400; --accent-soft:#3a2f08;
+  --ok:#5fcf94; --ok-soft:#173326; --warn:#ffb15c; --warn-soft:#3a2810; --bad:#ff8a80; --bad-soft:#3d1a18; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1240px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:22px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,4.4vw,44px);letter-spacing:-.01em;line-height:1;margin:0;text-wrap:balance}
+h1 .tape{display:inline-block;background:repeating-linear-gradient(-45deg,var(--accent) 0 10px,var(--fg) 10px 20px);width:38px;height:.62em;margin-right:12px;vertical-align:.08em;border-radius:2px}
+.sub{color:var(--muted);margin:6px 0 0;font-size:14px}
+.stamp{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);text-align:right}
+.stamp b{color:var(--fg);font-weight:500}
+.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;gap:2px}
+.tile .n{font-family:var(--f-display);font-weight:700;font-size:28px;font-variant-numeric:tabular-nums;line-height:1.1}
+.tile .l{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.tile.hot{background:var(--accent-soft);border-color:var(--accent)}
+.tile.soonest .n{color:var(--warn)}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:6px 11px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.chip .c{font-family:var(--f-mono);font-size:11.5px;opacity:.7;margin-left:4px}
+.right{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+input[type=search],select{font:14px var(--f-body);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px;min-width:0}
+input[type=search]{width:220px;max-width:100%}
+label.tog{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+@media (max-width:420px){.grid{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;display:grid;grid-template-rows:auto 1fr auto;min-width:0;overflow:hidden}
+.card.top{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.card.rej{opacity:.5}
+.c-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px dashed var(--line);font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.c-head .lot{letter-spacing:.04em}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font:600 10.5px var(--f-body);text-transform:uppercase;letter-spacing:.07em;padding:3px 7px;border-radius:4px;background:var(--sunk);color:var(--fg)}
+.tag.top{background:var(--accent);color:var(--accent-ink)}
+.tag.new{background:var(--ok-soft);color:var(--ok)}
+.c-body{padding:12px 14px 14px;display:grid;gap:10px;align-content:start;min-width:0}
+.c-title{font-family:var(--f-display);font-weight:700;font-size:18px;line-height:1.2;margin:0;text-wrap:balance}
+.price{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.price .big{font-family:var(--f-display);font-weight:800;font-size:26px;font-variant-numeric:tabular-nums}
+.price .net{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.meta{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13px;color:var(--muted)}
+.due{font:600 12px var(--f-body);padding:3px 8px;border-radius:999px;background:var(--sunk);color:var(--muted)}
+.due.soon{background:var(--warn-soft);color:var(--warn)}
+.due.today{background:var(--bad-soft);color:var(--bad)}
+.due.open{background:var(--ok-soft);color:var(--ok)}
+.why{margin:0;font-size:14px;border-left:3px solid var(--accent);padding-left:10px}
+.specs{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13px;margin:0}
+.specs dt{color:var(--muted)}
+.specs dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.mono{font-family:var(--f-mono);font-size:12.5px}
+details.firm{border-top:1px solid var(--line);background:var(--sunk)}
+details.firm summary{cursor:pointer;padding:9px 14px;font-size:13px;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:8px}
+details.firm summary::-webkit-details-marker{display:none}
+details.firm summary::after{content:"▾";color:var(--muted)}
+details.firm[open] summary::after{content:"▴"}
+details.firm .inner{padding:0 14px 12px}
+.c-foot{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--line);flex-wrap:wrap}
+.btn{font:600 13px var(--f-body);padding:7px 12px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.btn.ghost{margin-left:auto;color:var(--muted)}
+h2{font-family:var(--f-display);font-weight:700;font-size:22px;margin:18px 0 0}
+.firms-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:820px;font-size:13.5px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;background:var(--sunk)}
+tr:last-child td{border-bottom:0}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:10px;padding:28px;text-align:center;color:var(--muted)}
+.note{font-size:12.5px;color:var(--muted)}
+@media (max-width:720px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.right{margin-left:0}.stamp{text-align:left}}
+@media (prefers-reduced-motion:no-preference){.card{transition:opacity .2s}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1><span class="tape" aria-hidden="true"></span>Okazje z upadłości</h1>
+      <p class="sub">Majątek upadłych firm w całej Polsce. Najpierw to, co najłatwiej odsprzedać: koparko-ładowarki, minikoparki, busy, wywrotki, auta (też elektryczne i sportowe) i narzędzia. Ceny wywoławcze od syndyków.</p>
+    </div>
+    <div class="stamp" id="stamp">Wczytuję dane…</div>
+  </header>
+
+  <section class="summary" aria-label="Podsumowanie">
+    <div class="tile"><span class="n" id="s-all">–</span><span class="l">ofert w katalogu</span></div>
+    <div class="tile hot"><span class="n" id="s-top">–</span><span class="l">top okazje</span></div>
+    <div class="tile"><span class="n" id="s-new">–</span><span class="l">nowe z ostatniego przeglądu</span></div>
+    <div class="tile soonest"><span class="n" id="s-due">–</span><span class="l">termin w ciągu 3 dni</span></div>
+  </section>
+
+  <div class="controls">
+    <div class="chips" id="cats" role="group" aria-label="Kategoria"></div>
+    <div class="right">
+      <input type="search" id="q" placeholder="Szukaj: marka, miasto, firma…" aria-label="Szukaj">
+      <select id="sort" aria-label="Sortowanie">
+        <option value="score">Najlepsze okazje</option>
+        <option value="new">Najnowsze</option>
+        <option value="due">Najbliższy termin</option>
+        <option value="cheap">Najtańsze</option>
+        <option value="exp">Najdroższe</option>
+      </select>
+      <label class="tog"><input type="checkbox" id="onlyWatch"> tylko obserwowane</label>
+      <label class="tog"><input type="checkbox" id="showRej"> pokaż odrzucone</label>
+    </div>
+  </div>
+
+  <div id="list" class="grid"></div>
+  <div id="empty" class="empty" hidden>Tu pojawią się oferty z przeglądów (7:00, 13:00, 19:00). Każda karta pokaże cenę, termin, wadium oraz dane upadłej firmy i syndyka.</div>
+
+  <h2>Firmy w upadłości</h2>
+  <p class="note">Firmy, z których majątku pochodzą oferty. Sygnatura akt pozwala sprawdzić sprawę w Krajowym Rejestrze Zadłużonych.</p>
+  <div class="firms-wrap"><table>
+    <thead><tr><th>Firma</th><th>KRS / adres</th><th>Sygnatura / sąd</th><th>Syndyk</th><th>Ofert</th><th>Uwagi</th></tr></thead>
+    <tbody id="firms"><tr><td colspan="6" class="note">Wczytuję…</td></tr></tbody>
+  </table></div>
+  <p class="note">Syndyk sprzedaje „jak stoi”, bez gwarancji i rękojmi. Szacunki ceny rynkowej są orientacyjne. Przed zakupem drogiej maszyny warto ją obejrzeć.</p>
+</div>
+
+<script>
+const CATS=[["fokus","★ Łatwe do sprzedania"],["all","Wszystko"],["koparki","Koparki, koparko-ładowarki, minikoparki"],["pojazdy","Busy, wywrotki, pojazdy"],["osobowe","Auta osobowe"],["elektryczne","Auta elektryczne"],["sportowe","Auta sportowe"],["narzedzia","Narzędzia"],["maszyny","Maszyny"],["agregaty","Agregaty"],["energetyka","Energetyka"],["budowlane","Budowlane"],["pakiety","Pakiety"],["towar","Towar"]];
+const FOCUS=new Set(["koparki","pojazdy","osobowe","elektryczne","sportowe","narzedzia"]);
+const inCat=(o,c)=>c==="all"||(c==="fokus"?FOCUS.has(o.kategoria):o.kategoria===c);
+const state={canWrite:false,offers:[],firms:{},marks:{},meta:null,cat:"fokus",q:"",sort:"score",onlyWatch:false,showRej:false,loaded:false};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+const zl=n=>typeof n==="number"?n.toLocaleString("pl-PL",{minimumFractionDigits:n%1?2:0,maximumFractionDigits:2})+" zł":"";
+const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+function daysLeft(iso){if(!iso)return null;const d=new Date(iso.slice(0,10)+"T00:00:00");return Math.round((d-today())/864e5)}
+function dueChip(o){
+  const d=daysLeft(o.termin);
+  if(d===null)return `<span class="due open">${esc(o.tryb_krotko||"bez terminu")}</span>`;
+  const date=new Date(o.termin.slice(0,10)+"T00:00:00").toLocaleDateString("pl-PL",{day:"numeric",month:"short"});
+  if(d<0)return `<span class="due">termin minął ${date}</span>`;
+  if(d===0)return `<span class="due today">termin dziś</span>`;
+  if(d<=3)return `<span class="due soon">zostało ${d} ${d===1?"dzień":"dni"} · ${date}</span>`;
+  return `<span class="due">do ${date} (${d} dni)</span>`;
+}
+const RANK={top:0,dobra:1,zwykla:2};
+function price(o){return typeof o.cena_brutto==="number"?o.cena_brutto:(typeof o.cena_netto==="number"?o.cena_netto*1.23:Infinity)}
+function filtered(){
+  const q=state.q.trim().toLowerCase();
+  let list=state.offers.filter(o=>{
+    const m=state.marks[o.id]?.status;
+    if(m==="odrzucone"&&!state.showRej)return false;
+    if(state.onlyWatch&&m!=="obserwuje")return false;
+    if(!inCat(o,state.cat))return false;
+    if(q){const f=state.firms[o.firma_id]||{};const hay=[o.tytul,o.miasto,o.woj,o.opis,f.nazwa,o.kategoria].join(" ").toLowerCase();if(!hay.includes(q))return false}
+    return true});
+  const dueKey=o=>{const d=daysLeft(o.termin);return d===null?999:(d<0?2000+(-d):d)};
+  const fk=o=>FOCUS.has(o.kategoria)?0:1;
+  const s={score:(a,b)=>fk(a)-fk(b)||(RANK[a.ocena]??3)-(RANK[b.ocena]??3)||dueKey(a)-dueKey(b),
+    new:(a,b)=>String(b.znaleziono||"").localeCompare(String(a.znaleziono||""))||String(b.dodano||"").localeCompare(String(a.dodano||"")),
+    due:(a,b)=>dueKey(a)-dueKey(b),cheap:(a,b)=>price(a)-price(b),exp:(a,b)=>price(b)-price(a)}[state.sort];
+  return list.sort(s);
+}
+function row(k,v,mono){return v?`<dt>${k}</dt><dd${mono?' class="mono"':""}>${esc(v)}</dd>`:""}
+function card(o){
+  const f=state.firms[o.firma_id]||{};const m=state.marks[o.id]?.status;
+  const lastRun=state.meta?.ostatni_przeglad;
+  const isNew=lastRun&&o.znaleziono&&o.znaleziono>=lastRun.slice(0,16);
+  const catName=(CATS.find(c=>c[0]===o.kategoria)||[0,o.kategoria])[1];
+  const priceTxt=typeof o.cena_brutto==="number"?zl(o.cena_brutto):(typeof o.cena_netto==="number"?zl(o.cena_netto):"cena w wykazie");
+  const netTxt=typeof o.cena_brutto==="number"&&typeof o.cena_netto==="number"?`${zl(o.cena_netto)} netto`:(o.cena_opis||"");
+  return `<article class="card${o.ocena==="top"?" top":""}${m==="odrzucone"?" rej":""}">
+    <div class="c-head"><span class="lot">${esc(o.zrodlo||"")} · ${esc(o.id)}</span><span class="tags">${isNew?'<span class="tag new">nowe</span>':""}${o.ocena==="top"?'<span class="tag top">top</span>':""}<span class="tag">${esc(catName)}</span></span></div>
+    <div class="c-body">
+      <h3 class="c-title">${esc(o.tytul)}</h3>
+      <div class="price"><span class="big">${esc(priceTxt)}</span><span class="net">${esc(netTxt)}</span></div>
+      <div class="meta"><span>${esc(o.miasto||"")}${o.woj?", "+esc(o.woj):""}</span>${dueChip(o)}</div>
+      ${o.dlaczego?`<p class="why">${esc(o.dlaczego)}</p>`:""}
+      <dl class="specs">${row("Stan",o.stan)}${row("Opis",o.opis)}${row("Wartość rynkowa",o.rynkowa_szac)}${row("Tryb",o.tryb)}${row("Wadium",o.wadium)}${row("Dodano",o.dodano)}</dl>
+    </div>
+    <details class="firm"><summary>Firma: ${esc(f.nazwa||"brak danych w ogłoszeniu")}</summary><div class="inner"><dl class="specs">
+      ${row("Firma",f.nazwa)}${row("KRS",f.krs,1)}${row("Adres",f.adres)}${row("Sygnatura",f.sygnatura,1)}${row("Sąd",f.sad)}${row("Syndyk",f.syndyk)}${row("Kancelaria",f.kancelaria)}${row("Sprzedający",f.sprzedajacy)}${row("Uwagi",f.uwagi)}
+    </dl></div></details>
+    <div class="c-foot">
+      ${o.link?`<a class="btn primary" href="${esc(o.link)}" target="_blank" rel="noopener">Ogłoszenie ↗</a>`:""}
+      ${state.canWrite?`<button class="btn" data-mark="obserwuje" data-id="${esc(o.id)}" aria-pressed="${m==="obserwuje"}">${m==="obserwuje"?"★ Obserwuję":"☆ Obserwuj"}</button>
+      <button class="btn ghost" data-mark="odrzucone" data-id="${esc(o.id)}" aria-pressed="${m==="odrzucone"}">${m==="odrzucone"?"Przywróć":"Odrzuć"}</button>`:(m==="obserwuje"?`<span class="tag top" style="align-self:center">★ obserwowane</span>`:"")}
+    </div>
+  </article>`;
+}
+function render(){
+  const counts={all:0,fokus:0};state.offers.forEach(o=>{if(state.marks[o.id]?.status==="odrzucone")return;counts.all++;if(FOCUS.has(o.kategoria))counts.fokus++;counts[o.kategoria]=(counts[o.kategoria]||0)+1});
+  $("cats").innerHTML=CATS.filter(([k])=>k==="all"||k==="fokus"||counts[k]).map(([k,n])=>`<button class="chip" data-cat="${k}" aria-pressed="${state.cat===k}">${n}<span class="c">${counts[k]||0}</span></button>`).join("");
+  const live=state.offers.filter(o=>state.marks[o.id]?.status!=="odrzucone");
+  $("s-all").textContent=live.length;
+  $("s-top").textContent=live.filter(o=>o.ocena==="top").length;
+  $("s-due").textContent=live.filter(o=>{const d=daysLeft(o.termin);return d!==null&&d>=0&&d<=3}).length;
+  $("s-new").textContent=state.meta?.nowych_w_ostatnim??"–";
+  if(state.meta?.ostatni_przeglad){const d=new Date(state.meta.ostatni_przeglad);$("stamp").innerHTML=`Ostatni przegląd: <b>${d.toLocaleString("pl-PL",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})}</b><br>Następne: 7:00 · 13:00 · 19:00 · strona odświeża się sama`}
+  else if(state.loaded)$("stamp").textContent="Przeglądy: 7:00 · 13:00 · 19:00";
+  const list=filtered();
+  $("list").innerHTML=list.map(card).join("");
+  $("empty").hidden=list.length>0;
+  if(!list.length&&state.offers.length)$("empty").textContent="Brak ofert dla tych filtrów.";
+  const firmCount={};state.offers.forEach(o=>{firmCount[o.firma_id]=(firmCount[o.firma_id]||0)+1});
+  const firms=Object.values(state.firms).sort((a,b)=>(firmCount[b.id]||0)-(firmCount[a.id]||0));
+  $("firms").innerHTML=firms.length?firms.map(f=>`<tr><td><b>${esc(f.nazwa)}</b>${f.branza?`<br><span class="note">${esc(f.branza)}</span>`:""}</td><td><span class="mono">${esc(f.krs||"–")}</span><br>${esc(f.adres||"")}</td><td><span class="mono">${esc(f.sygnatura||"–")}</span><br>${esc(f.sad||"")}</td><td>${esc(f.syndyk||"–")}<br><span class="note">${esc(f.kancelaria||"")}</span></td><td class="mono">${firmCount[f.id]||0}</td><td>${esc(f.uwagi||"")}</td></tr>`).join(""):`<tr><td colspan="6" class="note">Brak firm.</td></tr>`;
+}
+const MK="oznaczenia_v1";
+function loadMarks(){try{return JSON.parse(localStorage.getItem(MK)||"{}")}catch{return {}}}
+function saveMarks(){try{localStorage.setItem(MK,JSON.stringify(state.marks))}catch{}}
+state.canWrite=true;state.marks=loadMarks();
+document.addEventListener("click",e=>{
+  const c=e.target.closest("[data-cat]");if(c){state.cat=c.dataset.cat;render();return}
+  const b=e.target.closest("[data-mark]");if(!b)return;
+  const id=b.dataset.id,want=b.dataset.mark,cur=state.marks[id]?.status;
+  if(cur===want)delete state.marks[id];else state.marks[id]={status:want};
+  saveMarks();render();
+});
+$("q").addEventListener("input",e=>{state.q=e.target.value;render()});
+$("sort").addEventListener("change",e=>{state.sort=e.target.value;try{localStorage.setItem("sort",state.sort)}catch{}render()});
+$("onlyWatch").addEventListener("change",e=>{state.onlyWatch=e.target.checked;render()});
+$("showRej").addEventListener("change",e=>{state.showRej=e.target.checked;render()});
+try{const s=localStorage.getItem("sort");if(s){state.sort=s;$("sort").value=s}}catch{}
+render();
+async function load(){
+  try{
+    const t="?t="+Date.now();
+    const [o,f,m]=await Promise.all(["oferty","firmy","meta"].map(n=>fetch("data/"+n+".json"+t,{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()})));
+    state.offers=Object.entries(o).map(([id,d])=>({id,...d}));
+    state.firms=Object.fromEntries(Object.entries(f).map(([id,d])=>[id,{id,...d}]));
+    state.meta=m;state.loaded=true;render();
+  }catch(err){if(!state.loaded){$("stamp").textContent="Nie udało się wczytać ofert. Odśwież stronę za chwilę.";$("empty").hidden=false}}
+}
+load();setInterval(load,5*60*1000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)load()});
+</script>
+</body></html>
