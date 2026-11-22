@@ -51,7 +51,12 @@ label.tog{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--mut
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
 @media (max-width:420px){.grid{grid-template-columns:1fr}}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;display:grid;grid-template-rows:auto 1fr auto;min-width:0;overflow:hidden}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;display:grid;grid-template-rows:auto auto 1fr auto auto;min-width:0;overflow:hidden}
+.photo{display:block;position:relative;aspect-ratio:4/3;background:var(--sunk);border-bottom:1px solid var(--line);overflow:hidden}
+.photo img{display:block;width:100%;height:100%;object-fit:cover}
+.photo.none{display:grid;place-items:center;align-content:center;gap:4px;color:var(--muted);font-size:13px;text-align:center;padding:12px;background:repeating-linear-gradient(-45deg,var(--sunk) 0 14px,var(--bg) 14px 28px)}
+.photo.none b{font-family:var(--f-display);font-size:16px;color:var(--fg)}
+.photo .src{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.6);color:#fff;font-size:11.5px;padding:2px 7px;border-radius:4px}
 .card.top{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 .card.rej{opacity:.5}
 .c-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px dashed var(--line);font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
@@ -143,8 +148,8 @@ tr:last-child td{border-bottom:0}
 </div>
 
 <script>
-const CATS=[["fokus","★ Łatwe do sprzedania"],["all","Wszystko"],["koparki","Koparki, koparko-ładowarki, minikoparki"],["pojazdy","Busy, wywrotki, pojazdy"],["osobowe","Auta osobowe"],["elektryczne","Auta elektryczne"],["sportowe","Auta sportowe"],["narzedzia","Narzędzia"],["maszyny","Maszyny"],["agregaty","Agregaty"],["energetyka","Energetyka"],["budowlane","Budowlane"],["pakiety","Pakiety"],["towar","Towar"]];
-const FOCUS=new Set(["koparki","pojazdy","osobowe","elektryczne","sportowe","narzedzia"]);
+const CATS=[["fokus","★ Łatwe do sprzedania"],["all","Wszystko"],["koparki","Koparki, koparko-ładowarki, minikoparki"],["pojazdy","Busy, wywrotki, pojazdy"],["osobowe","Auta osobowe"],["elektryczne","Auta elektryczne"],["sportowe","Auta sportowe"],["narzedzia","Narzędzia"],["komputery","Komputery, serwery, części IT"],["maszyny","Maszyny"],["agregaty","Agregaty"],["energetyka","Energetyka"],["budowlane","Budowlane"],["pakiety","Pakiety"],["towar","Towar"]];
+const FOCUS=new Set(["koparki","pojazdy","osobowe","elektryczne","sportowe","narzedzia","komputery"]);
 const inCat=(o,c)=>c==="all"||(c==="fokus"?FOCUS.has(o.kategoria):o.kategoria===c);
 const state={canWrite:false,offers:[],firms:{},marks:{},meta:null,cat:"fokus",q:"",sort:"score",onlyWatch:false,showRej:false,loaded:false};
 const $=id=>document.getElementById(id);
@@ -180,6 +185,12 @@ function filtered(){
   return list.sort(s);
 }
 function row(k,v,mono){return v?`<dt>${k}</dt><dd${mono?' class="mono"':""}>${esc(v)}</dd>`:""}
+function noPhoto(cat){return `<div class="photo none"><b>${esc(cat)}</b><span>brak zdjęcia w ogłoszeniu</span></div>`}
+function photo(o,cat){
+  if(!o.zdjecie)return noPhoto(cat);
+  const img=`<img src="${esc(o.zdjecie)}" alt="${esc(o.tytul)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.closest('.photo').outerHTML=noPhoto(this.dataset.cat)" data-cat="${esc(cat)}">`;
+  return o.link?`<a class="photo" href="${esc(o.link)}" target="_blank" rel="noopener" aria-label="Otwórz ogłoszenie: ${esc(o.tytul)}">${img}<span class="src">zdjęcie z ogłoszenia</span></a>`:`<div class="photo">${img}</div>`;
+}
 function card(o){
   const f=state.firms[o.firma_id]||{};const m=state.marks[o.id]?.status;
   const lastRun=state.meta?.ostatni_przeglad;
@@ -189,6 +200,7 @@ function card(o){
   const netTxt=typeof o.cena_brutto==="number"&&typeof o.cena_netto==="number"?`${zl(o.cena_netto)} netto`:(o.cena_opis||"");
   return `<article class="card${o.ocena==="top"?" top":""}${m==="odrzucone"?" rej":""}">
     <div class="c-head"><span class="lot">${esc(o.zrodlo||"")} · ${esc(o.id)}</span><span class="tags">${isNew?'<span class="tag new">nowe</span>':""}${o.ocena==="top"?'<span class="tag top">top</span>':""}<span class="tag">${esc(catName)}</span></span></div>
+    ${photo(o,catName)}
     <div class="c-body">
       <h3 class="c-title">${esc(o.tytul)}</h3>
       <div class="price"><span class="big">${esc(priceTxt)}</span><span class="net">${esc(netTxt)}</span></div>
