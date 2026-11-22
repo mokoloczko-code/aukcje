@@ -1,0 +1,50 @@
+name: Przegląd okazji
+
+on:
+  schedule:
+    # co 30 minut
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: przeglad-okazji
+  cancel-in-progress: false
+
+jobs:
+  przeglad:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Pobierz repozytorium
+        uses: actions/checkout@v4
+
+      - name: Przegląd okazji (Claude)
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            Jesteś w repozytorium ze stroną GitHub Pages z katalogiem okazji z licytacji komorniczych, upadłości firm i aukcji poleasingowych.
+            Przeczytaj plik AGENT.md i wykonaj dokładnie opisany tam przegląd: znajdź nowe oferty i zaktualizuj pliki w katalogu data/ (oferty.json, firmy.json, meta.json).
+            Bieżący czas polski sprawdź poleceniem: TZ=Europe/Warsaw date
+            Sprawdź, że pliki są poprawnym JSON-em. NIE rób commita ani pusha (punkt g z AGENT.md pomiń): zmiany zapisze następny krok workflow.
+            Nie zmieniaj żadnych plików poza data/. Odpowiadaj po polsku.
+            Na końcu podsumuj krótko: czy portal komorniczy działał, ile nowych ofert dodano i skąd, 3–5 najlepszych nowych okazji.
+          claude_args: >-
+            --model claude-sonnet-5-5
+            --max-turns 250
+            --allowedTools "Bash,Read,Write,Edit,Glob,Grep,WebFetch,WebSearch"
+
+      - name: Zapisz zmiany w repozytorium
+        run: |
+          for f in oferty firmy meta; do node -e "JSON.parse(require('fs').readFileSync('data/$f.json','utf8'))"; done
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          if git diff --cached --quiet; then echo "Brak zmian w danych"; exit 0; fi
+          git commit -m "Przegląd okazji $(TZ=Europe/Warsaw date '+%Y-%m-%d %H:%M')"
+          git pull --rebase origin main
+          git push origin HEAD:main
